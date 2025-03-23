@@ -1,6 +1,11 @@
-from fpdf import FPDF
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import os
 import platform
+from typing import List, Dict
 
 # 한글 스트레칭 루틴
 korean_routine = [
@@ -41,30 +46,81 @@ korean_routine = [
     }
 ]
 
-# PDF 생성
-pdf = FPDF()
-pdf.add_page()
+# 상수 정의
+PDF_TITLE = "목 · 어깨 · 허리 통합 스트레칭 루틴 (5분 루틴)"
+OUTPUT_FILE = "스트레칭_루틴_한글버전.pdf"
+FONT_NAME = "Nanum"
+TITLE_FONT_SIZE = 14
+CONTENT_FONT_SIZE = 12
 
-# ⬇️ 여기에 너의 나눔고딕 폰트 경로를 넣어줘!
-if platform.system() == "Darwin":  # macOS
-    font_path = os.path.expanduser("~/Library/Fonts/NanumGothic.ttf")
-elif platform.system() == "Windows":  # Windows
-    font_path = "C:/Windows/Fonts/NanumGothic.ttf"
-elif platform.system() == "Linux":  # Linux
-    font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-else:
-    raise RuntimeError("Unsupported OS")
-pdf.add_font("Nanum", "", font_path, uni=True)
-pdf.set_font("Nanum", size=14)
+def get_font_path() -> str:
+    """운영체제별 폰트 경로를 반환합니다."""
+    font_paths = {
+        "Darwin": os.path.expanduser("~/Library/Fonts/NanumGothic.ttf"),
+        "Windows": "C:/Windows/Fonts/NanumGothic.ttf",
+        "Linux": "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+    }
+    
+    system = platform.system()
+    if system not in font_paths:
+        raise RuntimeError(f"지원하지 않는 운영체제입니다: {system}")
+    
+    font_path = font_paths[system]
+    if not os.path.exists(font_path):
+        raise FileNotFoundError(f"나눔고딕 폰트 파일을 찾을 수 없습니다: {font_path}")
+    
+    return font_path
 
-pdf.cell(0, 10, "목 · 어깨 · 허리 통합 스트레칭 루틴 (5분 루틴)", ln=True)
+def create_pdf(routine_data: List[Dict]) -> None:
+    """PDF를 생성합니다."""
+    # 폰트 등록
+    font_path = get_font_path()
+    pdfmetrics.registerFont(TTFont(FONT_NAME, font_path))
+    
+    # PDF 문서 생성
+    doc = SimpleDocTemplate(
+        OUTPUT_FILE,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
+    
+    # 스타일 설정
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='Korean',
+        fontName=FONT_NAME,
+        fontSize=12,
+        leading=16
+    ))
+    
+    # 내용 작성
+    story = []
+    story.append(Paragraph(PDF_TITLE, ParagraphStyle(
+        'Title',
+        fontName=FONT_NAME,
+        fontSize=16,
+        spaceAfter=30
+    )))
+    
+    for routine in routine_data:
+        story.append(Paragraph(routine['title'], styles['Korean']))
+        for step in routine['steps']:
+            story.append(Paragraph(f"• {step}", styles['Korean']))
+        story.append(Spacer(1, 12))
+    
+    # PDF 생성
+    doc.build(story)
 
-for routine in korean_routine:
-    pdf.ln(5)
-    pdf.set_font("Nanum", size=12)
-    pdf.multi_cell(0, 10, f"[{routine['title']}]")
-    for step in routine["steps"]:
-        pdf.multi_cell(0, 8, f"- {step}")
+def main():
+    """메인 함수"""
+    try:
+        create_pdf(korean_routine)
+        print(f"PDF가 성공적으로 생성되었습니다: {OUTPUT_FILE}")
+    except Exception as e:
+        print(f"PDF 생성 중 오류가 발생했습니다: {str(e)}")
 
-# 저장
-pdf.output("스트레칭_루틴_한글버전.pdf")
+if __name__ == "__main__":
+    main()
