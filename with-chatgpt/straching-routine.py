@@ -47,13 +47,13 @@ pdf.add_page()
 
 # ⬇️ 여기에 너의 나눔고딕 폰트 경로를 넣어줘!
 if platform.system() == "Darwin":  # macOS
-  font_path = os.path.expanduser("~/Library/Fonts/NanumGothic.ttf")
+    font_path = os.path.expanduser("~/Library/Fonts/NanumGothic.ttf")
 elif platform.system() == "Windows":  # Windows
-  font_path = "C:/Windows/Fonts/NanumGothic.ttf"
+    font_path = "C:/Windows/Fonts/NanumGothic.ttf"
 elif platform.system() == "Linux":  # Linux
-  font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+    font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
 else:
-  raise RuntimeError("Unsupported OS")
+    raise RuntimeError("Unsupported OS")
 pdf.add_font("Nanum", "", font_path, uni=True)
 pdf.set_font("Nanum", size=14)
 
